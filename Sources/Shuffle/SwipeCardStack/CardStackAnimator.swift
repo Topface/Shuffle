@@ -12,7 +12,7 @@ protocol CardStackAnimatable {
     static func swipe(_ cardStack: SwipeCardStack,
                       topCard: SwipeCard,
                       direction: SwipeDirection,
-                      forced: Bool)
+                      forced: Bool, isShift: Bool)
     static func shift(_ cardStack: SwipeCardStack, withDistance distance: Int)
     static func reset(_ cardStack: SwipeCardStack, topCard: SwipeCard)
     static func undo(_ cardStack: SwipeCardStack, topCard: SwipeCard)
@@ -125,10 +125,10 @@ class CardStackAnimator: Animator, CardStackAnimatable {
     class func swipe(_ cardStack: SwipeCardStack,
                      topCard: SwipeCard,
                      direction: SwipeDirection,
-                     forced: Bool) {
+                     forced: Bool, isShift: Bool) {
         removeBackgroundCardAnimations(cardStack)
         
-        let duration = swipeDuration(cardStack, topCard, direction, forced)
+        let duration = isShift ? 0 : swipeDuration(cardStack, topCard, direction, forced)
         animateKeyFrames(withDuration: duration,
                          delay: swipeDelay(topCard, forced),
                          animations: {

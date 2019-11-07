@@ -39,9 +39,9 @@ open class SwipeCardStack: UIView, SwipeCardDelegate {
         return currentState.remainingIndices.first ?? 0
     }
     
-    var visibleCards: [SwipeCard] = []
+    public var visibleCards: [SwipeCard] = []
     
-    var topCard: SwipeCard? {
+    public var topCard: SwipeCard? {
         return visibleCards.first
     }
     
@@ -144,9 +144,8 @@ open class SwipeCardStack: UIView, SwipeCardDelegate {
     
     //MARK: - Main Methods
     
-    public func swipe(_ direction: SwipeDirection, animated: Bool) {
-        if !isEnabled { return }
-        topCard?.swipe(direction: direction, animated: animated)
+    public func swipe(_ direction: SwipeDirection, animated: Bool, byButton: Bool = false) {
+        topCard?.swipe(direction: direction, animated: animated, byButton: byButton)
     }
     
     public func undoLastSwipe(animated: Bool) {
@@ -164,20 +163,8 @@ open class SwipeCardStack: UIView, SwipeCardDelegate {
         topCard?.reverseSwipe(from: previousSwipe.direction, animated: animated)
     }
     
-    public func shift(withDistance distance: Int = 1, animated: Bool) {
-        if !isEnabled || distance == 0 || visibleCards.count <= 1 { return }
-        
-        let remainingIndices =
-            currentState.remainingIndices.shift(withDistance: distance)
-        let newState = CardStackState(remainingIndices: remainingIndices,
-                                      previousSwipe: currentState.previousSwipe,
-                                      previousState: currentState.previousState)
-        loadState(newState)
-        
-        if animated {
-            isUserInteractionEnabled = false
-            animator.shift(self, withDistance: distance)
-        }
+    public func shift(_ direction: SwipeDirection) {
+        topCard?.shift(direction)
     }
     
     //MARK: - Data Source
@@ -247,11 +234,20 @@ open class SwipeCardStack: UIView, SwipeCardDelegate {
         animator.reset(self, topCard: card)
     }
     
-    func card(didSwipe card: SwipeCard, with direction: SwipeDirection, forced: Bool) {
-        delegate?.cardStack?(self, didSwipeCardAt: topCardIndex, with: direction)
-        
+    func card(didSwipe card: SwipeCard, with direction: SwipeDirection, forced: Bool, byButton: Bool, isShift: Bool) {
+        if isShift {
+            delegate?.cardStack?(self, didShiftCardAt: topCardIndex, with: direction)
+        } else {
+            delegate?.cardStack?(self, didSwipeCardAt: topCardIndex, with: direction, byButton: byButton)
+        }
+
+        guard currentState.remainingIndices.count > 0 else {
+            delegate?.didSwipeAllCards?(self)
+            return
+        }
+        currentState.remainingIndices.removeLast()
+
         updateSwipeState(direction: direction)
-        
         //insert new card if needed
         if currentState.remainingIndices.count - visibleCards.count > 0 {
             let bottomCardIndex = currentState.remainingIndices[visibleCards.count]
@@ -259,21 +255,14 @@ open class SwipeCardStack: UIView, SwipeCardDelegate {
                 insertCard(card, at: visibleCards.count)
             }
         }
-        
-        //no cards left
-        if currentState.remainingIndices.count == 0 {
-            delegate?.didSwipeAllCards?(self)
-        }
-        
-        isUserInteractionEnabled = false
-        animator.swipe(self, topCard: card, direction: direction, forced: forced)
+    
+        animator.swipe(self, topCard: card, direction: direction, forced: forced, isShift: isShift)
     }
     
     func updateSwipeState(direction: SwipeDirection) {
         visibleCards.remove(at: 0)
-        let remainingIndices = Array(currentState.remainingIndices.dropFirst())
         let swipe = Swipe(index: topCardIndex, direction: direction)
-        let newCurrentState = CardStackState(remainingIndices: remainingIndices,
+        let newCurrentState = CardStackState(remainingIndices: currentState.remainingIndices,
                                              previousSwipe: swipe,
                                              previousState: currentState)
         currentState = newCurrentState

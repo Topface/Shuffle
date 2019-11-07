@@ -148,16 +148,7 @@ open class SwipeView: UIView {
     /// was successful or cancelled.
     ///
     /// - Parameter recognizer: The gesture recognizer associated with the swipe.
-    open func endSwiping(_ recognizer: UIPanGestureRecognizer) {
-        if let direction = activeDirection {
-            if dragSpeed(direction) >= minimumSwipeSpeed(on: direction)
-                || dragPercentage(direction) >= 1 {
-                didSwipe(recognizer, with: direction)
-                return
-            }
-        }
-        didCancelSwipe(recognizer)
-    }
+    open func endSwiping(_ recognizer: UIPanGestureRecognizer) { }
     
     /// This function is called whenever the view recognizes a swipe. The default implementation does
     /// nothing; subclasses can override this method to perform whatever actions are necessary.

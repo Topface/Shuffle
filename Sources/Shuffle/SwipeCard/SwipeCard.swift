@@ -83,7 +83,11 @@ open class SwipeCard: SwipeView {
     
     var animator: CardAnimatable.Type = CardAnimator.self
     
-    private let overlayContainer = UIView()
+    private let overlayContainer: UIView = {
+        let view = UIView()
+        view.isUserInteractionEnabled = false
+        return view
+    }()
     
     private var layoutProvider: CardLayoutProvidable.Type = CardLayoutProvider.self
     private var transformProvider: CardTransformProvidable.Type = CardTransformProvider.self
@@ -177,10 +181,21 @@ open class SwipeCard: SwipeView {
         }
     }
     
+    open override func endSwiping(_ recognizer: UIPanGestureRecognizer) {
+        if let direction = activeDirection {
+            if dragSpeed(direction) >= minimumSwipeSpeed(on: direction)
+                || dragPercentage(direction) >= 1 {
+                didSwipe(recognizer, with: direction)
+                return
+            }
+        }
+        didCancelSwipe(recognizer)
+    }
+    
     override open func didSwipe(_ recognizer: UIPanGestureRecognizer,
                                 with direction: SwipeDirection) {
         super.didSwipe(recognizer, with: direction)
-        swipeAction(direction: direction, forced: false, animated: true)
+        swipeAction(direction: direction, forced: false, animated: true, byButton: false)
     }
     
     override open func didCancelSwipe(_ recognizer: UIPanGestureRecognizer) {
@@ -195,13 +210,17 @@ open class SwipeCard: SwipeView {
         return nil
     }
     
-    public func swipe(direction: SwipeDirection, animated: Bool) {
-        swipeAction(direction: direction, forced: true, animated: animated)
+    public func swipe(direction: SwipeDirection, animated: Bool, byButton: Bool) {
+        swipeAction(direction: direction, forced: true, animated: animated, byButton: byButton)
     }
     
-    func swipeAction(direction: SwipeDirection, forced: Bool, animated: Bool) {
+    public func shift(_ direction: SwipeDirection) {
+        swipeAction(direction: direction, forced: false, animated: false, byButton: true, isShift: true)
+    }
+    
+    func swipeAction(direction: SwipeDirection, forced: Bool, animated: Bool, byButton: Bool, isShift: Bool = false) {
         isUserInteractionEnabled = false
-        delegate?.card(didSwipe: self, with: direction, forced: forced)
+        delegate?.card(didSwipe: self, with: direction, forced: forced, byButton: byButton, isShift: isShift)
         if animated {
             animator.swipe(self, direction: direction, forced: forced)
         } else {
