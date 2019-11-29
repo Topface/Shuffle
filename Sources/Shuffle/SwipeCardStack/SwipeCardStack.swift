@@ -272,4 +272,9 @@ open class SwipeCardStack: UIView, SwipeCardDelegate {
         isUserInteractionEnabled = false
         animator.undo(self, topCard: card)
     }
+    
+    public func resetSwipe() {
+        guard let card = topCard else { return }
+        animator.reset(self, topCard: card)
+    }
 }
