@@ -129,7 +129,9 @@ open class SwipeCardStack: UIView, SwipeCardDelegate {
     func layoutCard(_ card: SwipeCard, at index: Int) {
         card.transform = .identity
         card.frame = layoutProvider.cardFrame(self)
-        card.transform = transform(forCardAtIndex: index)
+        if #available(iOS 11.0, *) {
+            card.transform = transform(forCardAtIndex: index)
+        }
         card.isUserInteractionEnabled = index == 0
     }
     
